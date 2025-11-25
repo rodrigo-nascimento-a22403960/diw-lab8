@@ -1,15 +1,8 @@
-import Image from 'next/image';
-import tecnologiasJson from '@/app/data/tecnologias.json';
+// app/tecnologias/page.tsx
+import tecnologiasJson from "@/app/data/tecnologias.json";
+import TecnologiaCard, { Tecnologia } from "@/app/components/TecnologiaCard";
 
-type Tecnologia = {
-  title: string;
-  image: string;
-  description: string;
-  rating: number;
-};
-
-// convertemos o JSON para um array JS (como o enunciado pede)
-const tecnologias: Tecnologia[] = JSON.parse(JSON.stringify(tecnologiasJson));
+const tecnologias = tecnologiasJson as Tecnologia[];
 
 export default function TecnologiasPage() {
   return (
@@ -23,31 +16,9 @@ export default function TecnologiasPage() {
           de Interfaces Web.
         </p>
 
-        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3 mt-10">
           {tecnologias.map((tec, i) => (
-            <article
-              key={i}
-              className="bg-white rounded-3xl shadow-lg px-8 pt-10 pb-8 flex flex-col items-center text-center"
-            >
-              {/* Imagem da tecnologia */}
-              <div className="w-24 h-24 mb-6 relative">
-                <Image
-                  src={`/tecnologias/${tec.image}`}
-                  alt={tec.title}
-                  fill
-                  sizes="96px"
-                  className="object-contain"
-                />
-              </div>
-
-              <h3 className="text-xl font-semibold mb-3">{tec.title}</h3>
-              <p className="text-gray-600 text-sm mb-6">{tec.description}</p>
-
-              <p className="text-sm font-medium text-amber-500">
-                Rating: {'★'.repeat(tec.rating)}
-                {'☆'.repeat(5 - tec.rating)}
-              </p>
-            </article>
+            <TecnologiaCard key={i} tecnologia={tec} index={i} />
           ))}
         </div>
       </section>

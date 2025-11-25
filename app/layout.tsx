@@ -5,7 +5,7 @@ import './globals.css';
 
 export const metadata: Metadata = {
   title: 'React & Next.js',
-  description: 'DIW - Laboratórios com React e Next.js',
+  description: 'Laboratórios DIW – React e Next.js',
 };
 
 export default function RootLayout({
@@ -26,6 +26,7 @@ export default function RootLayout({
             <Link href="/sobre">Sobre</Link>
             <Link href="/caracteristicas">Características</Link>
             <Link href="/tecnologias">Tecnologias</Link>
+            <Link href="/projetos">Projetos</Link>
           </nav>
         </header>
 
@@ -33,7 +34,9 @@ export default function RootLayout({
           {children}
         </main>
 
-        <footer>DIW {data.getFullYear()}</footer>
+        <footer>
+          DIW {data.getFullYear()}
+        </footer>
       </body>
     </html>
   );

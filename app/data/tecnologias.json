@@ -1,86 +1,62 @@
 [
   {
     "title": "HTML",
-    "image": "file.svg",
-    "description": "Linguagem de marcação que define a estrutura das páginas web.",
-    "rating": 5
+    "image": "html.svg",
+    "description": "Linguagem de marcação utilizada para estruturar páginas web.",
+    "rating": 4
   },
   {
     "title": "CSS",
-    "image": "file.svg",
-    "description": "Define estilos, cores e layouts responsivos.",
-    "rating": 5
-  },
-  {
-    "title": "Tailwind CSS",
-    "image": "file.svg",
-    "description": "Framework CSS utilitária para criar layouts rápidos só com classes.",
+    "image": "css.svg",
+    "description": "Folhas de estilo responsáveis pela aparência e layout das páginas.",
     "rating": 4
   },
   {
     "title": "JavaScript",
-    "image": "globe.svg",
-    "description": "Linguagem que dá interatividade às páginas web.",
+    "image": "js.svg",
+    "description": "Linguagem de programação que adiciona interatividade ao frontend.",
     "rating": 5
   },
   {
     "title": "TypeScript",
-    "image": "globe.svg",
-    "description": "Superset de JavaScript com tipos estáticos.",
+    "image": "ts.svg",
+    "description": "Superset de JavaScript que adiciona tipagem estática.",
+    "rating": 4
+  },
+  {
+    "title": "Tailwind CSS",
+    "image": "tailwind.svg",
+    "description": "Framework CSS utilitária para construir interfaces rapidamente.",
     "rating": 4
   },
   {
     "title": "JSON",
-    "image": "globe.svg",
-    "description": "Formato de dados leve usado em APIs e configurações.",
+    "image": "json.svg",
+    "description": "Formato leve para troca de dados entre aplicações.",
     "rating": 4
   },
   {
-    "title": "API RESTful",
-    "image": "window.svg",
-    "description": "Padrão para criar APIs que comunicam via HTTP.",
+    "title": "API REST",
+    "image": "api.svg",
+    "description": "Padrão arquitetural para comunicação entre sistemas.",
     "rating": 4
   },
   {
     "title": "Swagger",
-    "image": "window.svg",
-    "description": "Ferramenta para documentar e testar APIs REST.",
+    "image": "swagger.svg",
+    "description": "Ferramenta para documentação e teste de APIs REST.",
     "rating": 3
   },
   {
     "title": "GitHub",
-    "image": "window.svg",
-    "description": "Plataforma de alojamento de código com Git.",
+    "image": "github.svg",
+    "description": "Plataforma de alojamento de código e colaboração com Git.",
     "rating": 5
-  },
-  {
-    "title": "Codespaces",
-    "image": "window.svg",
-    "description": "Ambiente de desenvolvimento na cloud integrado com GitHub.",
-    "rating": 4
-  },
-  {
-    "title": "GitHub Pages",
-    "image": "window.svg",
-    "description": "Serviço da GitHub para publicar sites estáticos.",
-    "rating": 4
   },
   {
     "title": "React.js",
-    "image": "next.svg",
-    "description": "Biblioteca JS para criar interfaces de utilizador com componentes.",
+    "image": "react.svg",
+    "description": "Biblioteca JavaScript para construção de interfaces reativas.",
     "rating": 5
-  },
-  {
-    "title": "Next.js",
-    "image": "next.svg",
-    "description": "Framework React com rotas, server-side rendering e muito mais.",
-    "rating": 5
-  },
-  {
-    "title": "Vercel",
-    "image": "vercel.svg",
-    "description": "Plataforma usada para fazer deploy de apps Next.js.",
-    "rating": 4
   }
 ]
