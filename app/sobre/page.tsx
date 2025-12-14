@@ -1,5 +1,4 @@
-// app/sobre/page.tsx
-export default function Page() {
+export default function SobrePage() {
   return (
     <>
       <h2>Desenvolvimento Web Moderno</h2>
@@ -9,5 +8,5 @@ export default function Page() {
         <li>Dominar estas tecnologias abre muitas oportunidades!</li>
       </ul>
     </>
-  );
+  )
 }

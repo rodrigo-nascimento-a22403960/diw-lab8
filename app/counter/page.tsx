@@ -1,4 +1,4 @@
-export default function page() {
+export default function CounterPage() {
   return (
     <div>
       <h2>Hello World!</h2>

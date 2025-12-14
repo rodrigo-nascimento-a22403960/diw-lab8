@@ -1,5 +1,4 @@
-
-import DescricaoProjetos from '@/components/DescricaoProjetos';
+import DescricaoProjetos from "@/components/DescricaoProjetos/DescricaoProjetos"
 
 export default function ProjetosPage() {
   return (
@@ -7,5 +6,5 @@ export default function ProjetosPage() {
       <h2>Projetos</h2>
       <DescricaoProjetos />
     </div>
-  );
+  )
 }

@@ -1,25 +1,18 @@
-// app/layout.tsx
-import type { Metadata } from 'next';
-import Link from 'next/link';
-import './globals.css';
-
-export const metadata: Metadata = {
-  title: 'React & Next.js',
-  description: 'Laboratórios DIW – React e Next.js',
-};
+import "./globals.css"
+import Link from "next/link"
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
-  const data = new Date();
+  const data = new Date()
 
   return (
-    <html lang="pt">
+    <html lang="en">
       <body className="flex flex-col justify-start gap-4 p-20 items-center min-h-screen">
         <header className="flex flex-col items-center">
-          <h1>React &amp; Next.js</h1>
+          <h1>React & Next.js</h1>
 
           <nav className="flex gap-4">
             <Link href="/">Intro</Link>
@@ -27,6 +20,7 @@ export default function RootLayout({
             <Link href="/caracteristicas">Características</Link>
             <Link href="/tecnologias">Tecnologias</Link>
             <Link href="/projetos">Projetos</Link>
+
           </nav>
         </header>
 
@@ -34,10 +28,8 @@ export default function RootLayout({
           {children}
         </main>
 
-        <footer>
-          DIW {data.getFullYear()}
-        </footer>
+        <footer>DIW {data.getFullYear()}</footer>
       </body>
     </html>
-  );
+  )
 }
