@@ -36,7 +36,12 @@ export default async function TecnologiaPage({
     <div>
       <h2>Detalhes da Tecnologia</h2>
 
-      <TecnologiaDetailsCard tecnologia={tecnologia} />
+      <TecnologiaDetailsCard
+        title={tecnologia.title}
+        image={tecnologia.image}
+        description={tecnologia.description}
+        rating={tecnologia.rating}
+      />
 
       <Link
         href="/tecnologias"

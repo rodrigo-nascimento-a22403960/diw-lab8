@@ -1,4 +1,5 @@
 import Image from "next/image"
+import ContadorPersonalizado from "@/components/ContadorPersonalizado/ContadorPersonalizado"
 
 export interface TecnologiaCardProps {
   title: string
@@ -16,6 +17,8 @@ export default function TecnologiaCard({ title, image }: TecnologiaCardProps) {
         width={90}
         height={90}
       />
+
+      <ContadorPersonalizado title={title} />
     </div>
   )
 }

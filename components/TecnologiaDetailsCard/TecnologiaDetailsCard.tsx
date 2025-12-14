@@ -1,31 +1,29 @@
 import Image from "next/image"
+import ContadorPersonalizado from "@/components/ContadorPersonalizado/ContadorPersonalizado"
 
-type Tecnologia = {
+export interface TecnologiaDetailsCardProps {
   title: string
   image: string
   description: string
   rating: number
 }
 
-export interface TecnologiaDetailsCardProps {
-  tecnologia: Tecnologia
-}
-
-export default function TecnologiaDetailsCard({ tecnologia }: TecnologiaDetailsCardProps) {
+export default function TecnologiaDetailsCard({
+  title,
+  image,
+  description,
+  rating,
+}: TecnologiaDetailsCardProps) {
   return (
-    <div className="bg-blue-300 p-4 rounded-2xl mt-4 flex gap-4 items-center">
-      <Image
-        src={`/tecnologias/${tecnologia.image}`}
-        alt={`Logotipo do ${tecnologia.title}`}
-        width={90}
-        height={90}
-      />
+    <div className="bg-blue-200/70 rounded-2xl p-6 text-center flex flex-col items-center gap-4">
+      <h2 className="text-xl font-bold">{title}</h2>
 
-      <div>
-        <p className="font-bold">{tecnologia.title}</p>
-        <p>{tecnologia.description}</p>
-        <p>Rating: {tecnologia.rating}</p>
-      </div>
+      <Image src={`/tecnologias/${image}`} alt={`Logotipo do ${title}`} width={110} height={110} />
+
+      <p>{description}</p>
+      <p className="font-semibold">Rating: {rating}</p>
+
+      <ContadorPersonalizado title={title} />
     </div>
   )
 }
