@@ -29,8 +29,7 @@ export default function DescricaoProjetos() {
           nome="Loja online com JS interativo"
           url="https://teu-utilizador.github.io/loja" // troca pelo link real da loja
         />
-        {/* Se quiseres, adiciona mais projetos aqui */}
-        {/* <Projeto nome="Outro projeto fixe" url="https://..." /> */}
+       
       </ul>
     </div>
   );
