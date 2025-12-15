@@ -1,29 +1,35 @@
 "use client"
 
 import Link from "next/link"
+import { useEffect, useMemo, useState } from "react"
 import { useParams } from "next/navigation"
 import useSWR from "swr"
-import { useEffect, useMemo, useState } from "react"
 
-import ProdutoCard from "@/components/ProdutoCard/ProdutoCard"
+import ProdutosList from "@/components/ProdutosList/ProdutosList"
 import { apiUrl, swrFetcher, type Produto } from "@/lib/deisishop"
 
-const LS_CART = "cart" // IMPORTANTE: usa a MESMA key que usas em /produtos
+const LS_CART = "cart"
+
+function priceToNumber(price: string) {
+  const n = Number(String(price ?? "").replace(",", "."))
+  return Number.isFinite(n) ? n : 0
+}
 
 function readCart(): Produto[] {
   try {
     const raw = localStorage.getItem(LS_CART)
     const arr = raw ? (JSON.parse(raw) as unknown) : []
-    return Array.isArray(arr) ? (arr as Produto[]) : []
+    const list = Array.isArray(arr) ? arr : []
+    return list
+      .map((x: any) => x as Produto)
+      .filter((p) => p && Number.isFinite(Number(p.id)))
   } catch {
     return []
   }
 }
 
 function writeCart(cart: Produto[]) {
-  try {
-    localStorage.setItem(LS_CART, JSON.stringify(cart))
-  } catch {}
+  localStorage.setItem(LS_CART, JSON.stringify(cart))
 }
 
 export default function CategoriaProdutosPage() {
@@ -32,20 +38,12 @@ export default function CategoriaProdutosPage() {
   const nameStr = Array.isArray(raw) ? raw[0] : raw
   const categoria = decodeURIComponent(nameStr ?? "").trim()
 
-  // produtos
   const { data, error, isLoading, mutate } = useSWR<Produto[]>(
     apiUrl("/products"),
-    swrFetcher
+    swrFetcher as any
   )
 
-  const produtos = useMemo(() => {
-    const alvo = categoria.toLowerCase()
-    return (data ?? []).filter(
-      (p) => (p.category ?? "").trim().toLowerCase() === alvo
-    )
-  }, [data, categoria])
-
-  // carrinho
+  // carrinho (partilhado via localStorage)
   const [cart, setCart] = useState<Produto[]>([])
   const [hydrated, setHydrated] = useState(false)
 
@@ -63,47 +61,63 @@ export default function CategoriaProdutosPage() {
   }
 
   function removeFromCart(id: number) {
-    setCart((prev) => prev.filter((p) => p.id !== id))
+    setCart((prev) => prev.filter((x) => x.id !== id))
   }
+
+  const cartIds = useMemo(() => new Set(cart.map((p) => p.id)), [cart])
+
+  const alvo = categoria.toLowerCase()
+  const produtos = (data ?? []).filter(
+    (p) => (p.category ?? "").trim().toLowerCase() === alvo
+  )
+
+  const total = useMemo(() => cart.reduce((sum, p) => sum + priceToNumber(p.price), 0), [cart])
 
   return (
     <div>
-      <h2 className="text-xl font-bold">Categoria: {categoria || "—"}</h2>
+      <div className="flex items-center justify-between gap-4">
+        <h2 className="text-2xl font-extrabold drop-shadow-sm">
+          Categoria: {categoria || "—"}
+        </h2>
+
+        <div className="text-sm font-semibold opacity-90">
+          Carrinho: {cart.length} | {total.toFixed(2)} €
+        </div>
+      </div>
 
       {isLoading ? (
         <p className="mt-2 opacity-80">A carregar...</p>
       ) : error ? (
-        <>
-          <p className="mt-2 text-red-600">Erro: {String((error as any)?.message ?? error)}</p>
+        <div className="mt-4 rounded-2xl bg-red-500/10 p-4">
+          <p className="font-bold">Erro</p>
+          <p className="opacity-80 mt-1">{String((error as any)?.message ?? error)}</p>
           <button
             onClick={() => mutate()}
-            className="mt-3 rounded-xl bg-blue-300 px-4 py-2"
+            className="mt-3 rounded-xl bg-blue-300 px-4 py-2 hover:bg-blue-200"
           >
             Tentar novamente
           </button>
-        </>
+        </div>
       ) : produtos.length === 0 ? (
         <p className="mt-2 opacity-80">Sem produtos para mostrar.</p>
       ) : (
-        <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {produtos.map((p) => {
-            const inCart = cart.some((x) => x.id === p.id)
-            return (
-              <ProdutoCard
-                key={p.id}
-                produto={p}
-                onAddToCart={addToCart}
-                onRemoveFromCart={removeFromCart}
-                inCart={inCart}
-              />
-            )
-          })}
-        </div>
+        <ProdutosList
+          produtos={produtos}
+          cartIds={cartIds}
+          onAddToCart={addToCart}
+          onRemoveFromCart={removeFromCart}
+        />
       )}
 
-      <Link href="/categorias" className="inline-block mt-4 underline">
-        Voltar às categorias
-      </Link>
+      <div className="mt-6 flex flex-wrap gap-4">
+        <Link href="/categorias" className="underline">
+          Voltar às categorias
+        </Link>
+
+        <Link href="/produtos" className="underline">
+          Ir para Produtos (checkout)
+        </Link>
+      </div>
     </div>
   )
 }

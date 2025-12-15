@@ -3,8 +3,8 @@
 import useSWR from "swr"
 import { useEffect, useMemo, useState } from "react"
 import ProdutosList from "@/components/ProdutosList/ProdutosList"
-import { apiUrl, buy, swrFetcher, type Produto } from "@/lib/deisishop"
 import ProdutoCard from "@/components/ProdutoCard/ProdutoCard"
+import { apiUrl, buy, swrFetcher, type Produto } from "@/lib/deisishop"
 
 type SortKey = "name-asc" | "name-desc" | "price-asc" | "price-desc"
 const LS_CART = "cart"
@@ -34,7 +34,7 @@ function writeCart(cart: Produto[]) {
 export default function ProdutosPage() {
   const { data, error, isLoading, mutate } = useSWR<Produto[]>(
     apiUrl("/products"),
-    swrFetcher
+    swrFetcher as any
   )
 
   const [sort, setSort] = useState<SortKey>("name-asc")
@@ -91,10 +91,7 @@ export default function ProdutosPage() {
     return produtos
   }, [data, sort])
 
-  const total = useMemo(
-    () => cart.reduce((sum, p) => sum + priceToNumber(p.price), 0),
-    [cart]
-  )
+  const total = useMemo(() => cart.reduce((sum, p) => sum + priceToNumber(p.price), 0), [cart])
 
   async function onBuy() {
     if (cart.length === 0) return
@@ -138,8 +135,7 @@ export default function ProdutosPage() {
   return (
     <div className="space-y-8">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h2 className="text-2xl font-extrabold text-white drop-shadow">Produtos</h2>
-
+        <h2 className="text-2xl font-extrabold drop-shadow-sm">Produtos</h2>
 
         <label className="flex items-center gap-2">
           <span className="opacity-80 text-sm">Ordenar:</span>
@@ -166,8 +162,8 @@ export default function ProdutosPage() {
       {/* Carrinho */}
       <div className="rounded-2xl bg-blue-300/30 p-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-bold">Carrinho ({cart.length})</h3>
-          <div className="opacity-90">Total: {total.toFixed(2)} €</div>
+          <h3 className="text-lg font-extrabold">Carrinho ({cart.length})</h3>
+          <div className="opacity-90 font-semibold">Total: {total.toFixed(2)} €</div>
         </div>
 
         {cart.length === 0 ? (
@@ -175,14 +171,12 @@ export default function ProdutosPage() {
         ) : (
           <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
             {cart.map((p) => (
-              <div key={p.id}>
-                {/* reutiliza o mesmo card mas forçando modo "inCart" */}
-                <ProdutosList
-                  produtos={[p]}
-                  cartIds={new Set([p.id])}
-                  onRemoveFromCart={removeFromCart}
-                />
-              </div>
+              <ProdutoCard
+                key={p.id}
+                produto={p}
+                inCart={true}
+                onRemoveFromCart={removeFromCart}
+              />
             ))}
           </div>
         )}
@@ -215,7 +209,7 @@ export default function ProdutosPage() {
           <button
             onClick={onBuy}
             disabled={cart.length === 0 || buyStatus === "loading"}
-            className="rounded-xl bg-blue-300 px-4 py-2 hover:bg-blue-200 disabled:opacity-50 sm:col-span-2"
+            className="rounded-xl bg-slate-900 px-4 py-2 text-white font-semibold hover:bg-slate-800 disabled:opacity-50 sm:col-span-2"
           >
             {buyStatus === "loading" ? "A comprar..." : "Comprar"}
           </button>

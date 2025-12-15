@@ -18,7 +18,7 @@ export default function DescricaoProjetos() {
       <h2>Alguns projetos</h2>
 
       <Projeto nome="Loja" url="https://rodrigo-nascimento-a22403960.github.io/rodrigonascimento.github.io/" />
-      <Projeto nome="Site JS Interativo" url="https://exemplo.com/js-interativo" />
+      <Projeto nome="Site JS Interativo" url="https://refactored-succotash-97x7974rgg79hxv74-3001.app.github.dev/projetos" />
     </div>
   )
 }
