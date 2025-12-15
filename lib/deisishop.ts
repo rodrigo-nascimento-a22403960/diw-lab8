@@ -1,5 +1,11 @@
 // lib/deisishop.ts
 
+export const API_BASE = "https://deisishop.pythonanywhere.com"
+
+export type Categoria = {
+  name: string
+}
+
 export type Rating = {
   rate: number
   count: number
@@ -7,48 +13,50 @@ export type Rating = {
 
 export type Produto = {
   id: number
-  title?: string
-  name?: string
-  price?: string
-  preco?: string
-  description?: string
-  descricao?: string
-  category?: string
-  categoria?: string
-  image?: string
-  imagem?: string
-  image_url?: string
-  imagem_url?: string
-  rating?: Rating
+  title: string
+  price: string // a API devolve como string
+  description: string
+  category: string
+  image: string
+  rating: Rating
 }
-
-export type Categoria = {
-  name: string
-}
-
-export type BuyRequest = {
-  products: number[]
-  student: boolean
-  coupon?: string
-  name: string
-}
-
-export type BuyResponse = {
-  totalCost?: string
-  reference?: string
-  message?: string
-  error?: string
-}
-
-// Ajusta se precisares (mas como já estás a ver produtos, isto deve estar ok)
-const BASE_URL =
-  process.env.NEXT_PUBLIC_DEISISHOP_API_URL ??
-  process.env.DEISISHOP_API_URL ??
-  "http://localhost:3001"
 
 export function apiUrl(path: string) {
   const p = path.startsWith("/") ? path : `/${path}`
-  return `${BASE_URL}${p}`
+  return `${API_BASE}${p}`
+}
+
+export function resolveImageUrl(img?: string | null) {
+  if (!img) return ""
+  if (img.startsWith("http://") || img.startsWith("https://")) return img
+  if (img.startsWith("//")) return `https:${img}`
+  if (img.startsWith("/")) return apiUrl(img)
+  return img
+}
+
+/**
+ * ✅ Fetcher genérico para SWR (SWR = Stale While Revalidate)
+ * O SWR pode passar key como string, array, null, etc.
+ */
+export const swrFetcher = async <T,>(key: any): Promise<T> => {
+  const url =
+    typeof key === "string"
+      ? key
+      : Array.isArray(key)
+      ? key[0]
+      : String(key ?? "")
+
+  const res = await fetch(url, {
+    headers: { Accept: "application/json" },
+    cache: "no-store",
+  })
+
+  if (!res.ok) {
+    const txt = await res.text().catch(() => "")
+    throw new Error(`API ${res.status} ${res.statusText} (${url}) ${txt}`)
+  }
+
+  return (await res.json()) as T
 }
 
 async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
@@ -63,78 +71,59 @@ async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
 
   if (!res.ok) {
     const txt = await res.text().catch(() => "")
-    throw new Error(`API ${res.status} em ${path}${txt ? `: ${txt}` : ""}`)
+    throw new Error(`API ${res.status} ${res.statusText} (${path}) ${txt}`)
   }
 
   return (await res.json()) as T
 }
 
-function norm(s: unknown) {
-  return String(s ?? "").trim().toLowerCase()
+// ---- Funções (server/client) ----
+
+export async function getProdutos() {
+  return fetchJson<Produto[]>("/products")
 }
 
-export function resolveImageUrl(img: string | null | undefined) {
-  if (!img) return ""
-  const s = String(img).trim()
-  if (!s) return ""
+export async function getProduto(id: number) {
+  const res = await fetch(apiUrl(`/products/${id}`), { cache: "no-store" })
+  if (res.status === 404) return null
 
-  // já é URL completa
-  if (s.startsWith("http://") || s.startsWith("https://") || s.startsWith("data:")) return s
-
-  // se vier tipo "/images/x.png" ou "images/x.png"
-  return apiUrl(s.startsWith("/") ? s : `/${s}`)
-}
-
-export async function getCategorias(): Promise<Categoria[]> {
-  const data = await fetchJson<any>("/categories")
-
-  // Swagger mostra [{ name: "..." }], mas deixo compatível se vier ["..."]
-  if (Array.isArray(data) && typeof data[0] === "string") {
-    return data.map((name: string) => ({ name }))
+  if (!res.ok) {
+    const txt = await res.text().catch(() => "")
+    throw new Error(`API ${res.status} ${res.statusText} (/products/${id}) ${txt}`)
   }
 
-  if (Array.isArray(data)) return data as Categoria[]
-  return []
+  return (await res.json()) as Produto
 }
 
-export async function getProdutos(): Promise<Produto[]> {
-  const data = await fetchJson<any>("/products")
-  return Array.isArray(data) ? (data as Produto[]) : []
+export async function getCategorias() {
+  return fetchJson<Categoria[]>("/categories")
 }
 
-/**
- * A API (Swagger) NÃO tem GET /products/{id}.
- * Então buscamos a lista e filtramos.
- */
-export async function getProduto(id: number): Promise<Produto | null> {
+// A API não tem endpoint "produtos por categoria", então filtramos localmente.
+export async function getProdutosDaCategoria(nomeCategoria: string) {
   const produtos = await getProdutos()
-  const nid = Number(id)
-  if (!Number.isFinite(nid)) return null
-
-  return (
-    produtos.find((p) => Number((p as any).id) === nid) ??
-    null
-  )
+  const alvo = (nomeCategoria ?? "").trim().toLowerCase()
+  return produtos.filter((p) => (p.category ?? "").trim().toLowerCase() === alvo)
 }
 
-/**
- * A API (Swagger) NÃO tem endpoint de categoria.
- * Então buscamos a lista e filtramos por "category".
- */
-export async function getProdutosDaCategoria(categoria: string): Promise<Produto[]> {
-  const produtos = await getProdutos()
-  const wanted = norm(categoria)
-
-  return produtos.filter((p) => {
-    const c = norm((p as any).category ?? (p as any).categoria)
-    return c === wanted
-  })
+export type BuyRequest = {
+  products: number[]
+  student: boolean
+  coupon: string
+  name: string
 }
 
-export async function buy(payload: BuyRequest): Promise<BuyResponse> {
-  return await fetchJson<BuyResponse>("/buy", {
+export type BuyResponse = {
+  totalCost: string
+  reference: string
+  message: string
+  error?: string
+}
+
+export async function buy(body: BuyRequest) {
+  return fetchJson<BuyResponse>("/buy", {
     method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify(payload),
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
   })
 }

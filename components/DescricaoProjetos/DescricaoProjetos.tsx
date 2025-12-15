@@ -7,7 +7,7 @@ export default function DescricaoProjetos() {
         Ao longo da disciplina desenvolvi vários projetos. Podes ver todos na minha
         página do GitHub Pages:{" "}
         <a
-          href="https://SEU-UTILIZADOR.github.io/"
+          href="https://github.com/rodrigo-nascimento-a22403960"
           target="_blank"
           rel="noreferrer"
         >
@@ -17,7 +17,7 @@ export default function DescricaoProjetos() {
 
       <h2>Alguns projetos</h2>
 
-      <Projeto nome="Loja" url="https://exemplo.com/loja" />
+      <Projeto nome="Loja" url="https://rodrigo-nascimento-a22403960.github.io/rodrigonascimento.github.io/" />
       <Projeto nome="Site JS Interativo" url="https://exemplo.com/js-interativo" />
     </div>
   )

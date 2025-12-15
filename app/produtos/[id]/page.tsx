@@ -1,29 +1,61 @@
+"use client"
+
 import Link from "next/link"
-import { getProduto } from "@/lib/deisishop"
+import { useParams } from "next/navigation"
+import useSWR from "swr"
+
 import ProdutoDetails from "@/components/ProdutoDetails/ProdutoDetails"
+import { apiUrl, swrFetcher, type Produto } from "@/lib/deisishop"
 
-export default async function ProdutoPage({ params }: { params: { id: string } }) {
-  const id = Number.parseInt(params.id, 10)
+export default function ProdutoPage() {
+  const params = useParams()
+  const raw = params?.id
+  const idStr = Array.isArray(raw) ? raw[0] : raw
+  const id = Number.parseInt(idStr ?? "", 10)
 
-  if (Number.isNaN(id)) {
+  const shouldFetch = Number.isFinite(id)
+
+  const { data, error, isLoading, mutate } = useSWR<Produto>(
+    shouldFetch ? apiUrl(`/products/${id}`) : null,
+    swrFetcher
+  )
+
+  if (!shouldFetch) {
     return (
       <div>
-        <h2>Produto não encontrado</h2>
-        <Link href="/produtos" className="underline">Voltar</Link>
+        <h2 className="text-xl font-bold">Produto não encontrado</h2>
+        <Link className="underline" href="/produtos">Voltar</Link>
       </div>
     )
   }
 
-  const produto = await getProduto(id)
+  if (isLoading) return <p className="mt-2 opacity-80">A carregar...</p>
 
-  if (!produto) {
+  if (error) {
+    const msg = String((error as any)?.message ?? error)
+    const is404 = msg.includes(" 404 ")
     return (
       <div>
-        <h2>Produto não encontrado</h2>
-        <Link href="/produtos" className="underline">Voltar</Link>
+        <h2 className="text-xl font-bold">{is404 ? "Produto não encontrado" : "Erro ao carregar"}</h2>
+        <p className="mt-2 text-red-600">{msg}</p>
+        <div className="mt-3 flex gap-3">
+          <button onClick={() => mutate()} className="rounded-xl bg-blue-300 px-4 py-2">
+            Tentar novamente
+          </button>
+          <Link className="underline" href="/produtos">Voltar</Link>
+        </div>
       </div>
     )
   }
 
-  return <ProdutoDetails produto={produto} />
+  if (!data) {
+    return (
+      <div>
+        <h2 className="text-xl font-bold">Produto não encontrado</h2>
+        <Link className="underline" href="/produtos">Voltar</Link>
+      </div>
+    )
+  }
+
+  return <ProdutoDetails produto={data} />
 }
