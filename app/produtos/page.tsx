@@ -2,14 +2,17 @@
 
 import useSWR from "swr"
 import { useEffect, useMemo, useState } from "react"
-import ProdutosList from "@/components/ProdutosList/ProdutosList"
 import ProdutoCard from "@/components/ProdutoCard/ProdutoCard"
 import { apiUrl, buy, swrFetcher, type Produto } from "@/lib/deisishop"
 
-type SortKey = "name-asc" | "name-desc" | "price-asc" | "price-desc"
-const LS_CART = "cart"
+// Tipos de ordenação (incluindo Rating Asc/Desc)
+type SortKey = "name-asc" | "name-desc" | "price-asc" | "price-desc" | "rating-desc" | "rating-asc"
 
-function priceToNumber(price: string) {
+const LS_CART = "cart"
+const LS_FAVORITES = "favorites" // Chave para guardar favoritos no browser
+
+// Helpers
+function priceToNumber(price: string | number) {
   const n = Number(String(price ?? "").replace(",", "."))
   return Number.isFinite(n) ? n : 0
 }
@@ -31,33 +34,58 @@ function writeCart(cart: Produto[]) {
   localStorage.setItem(LS_CART, JSON.stringify(cart))
 }
 
+// Ler favoritos do localStorage
+function readFavorites(): number[] {
+  try {
+    const raw = localStorage.getItem(LS_FAVORITES)
+    const arr = raw ? JSON.parse(raw) : []
+    return Array.isArray(arr) ? arr : []
+  } catch {
+    return []
+  }
+}
+
+// Escrever favoritos no localStorage
+function writeFavorites(ids: number[]) {
+  localStorage.setItem(LS_FAVORITES, JSON.stringify(ids))
+}
+
 export default function ProdutosPage() {
   const { data, error, isLoading, mutate } = useSWR<Produto[]>(
     apiUrl("/products"),
     swrFetcher as any
   )
 
+  // Estados de Filtro e Ordenação
   const [sort, setSort] = useState<SortKey>("name-asc")
+  const [search, setSearch] = useState("")
 
-  // carrinho
+  // Estados Carrinho e Favoritos
   const [cart, setCart] = useState<Produto[]>([])
+  const [favorites, setFavorites] = useState<number[]>([])
   const [hydrated, setHydrated] = useState(false)
 
-  // comprar
+  // Estados de Compra
   const [student, setStudent] = useState(false)
   const [coupon, setCoupon] = useState("")
   const [name, setName] = useState("")
   const [buyStatus, setBuyStatus] = useState<"idle" | "loading" | "success" | "error">("idle")
   const [buyMsg, setBuyMsg] = useState<string>("")
 
+  // 1. Carregar dados do localStorage ao iniciar
   useEffect(() => {
     setCart(readCart())
+    setFavorites(readFavorites())
     setHydrated(true)
   }, [])
 
+  // 2. Guardar dados no localStorage sempre que mudam
   useEffect(() => {
-    if (hydrated) writeCart(cart)
-  }, [cart, hydrated])
+    if (hydrated) {
+      writeCart(cart)
+      writeFavorites(favorites)
+    }
+  }, [cart, favorites, hydrated])
 
   function addToCart(p: Produto) {
     setCart((prev) => (prev.some((x) => x.id === p.id) ? prev : [...prev, p]))
@@ -67,29 +95,45 @@ export default function ProdutosPage() {
     setCart((prev) => prev.filter((x) => x.id !== id))
   }
 
-  const cartIds = useMemo(() => new Set(cart.map((p) => p.id)), [cart])
+  // Função para adicionar/remover dos favoritos
+  function toggleFavorite(id: number) {
+    setFavorites((prev) => 
+      prev.includes(id) ? prev.filter((favId) => favId !== id) : [...prev, id]
+    )
+  }
 
-  const sortedProdutos = useMemo(() => {
-    const produtos = [...(data ?? [])]
+  // Lógica de Filtragem e Ordenação
+  const filteredAndSortedProdutos = useMemo(() => {
+    if (!data) return []
+
+    // Filtrar por pesquisa
+    let produtos = data.filter((p) => 
+      (p.title ?? "").toLowerCase().includes(search.toLowerCase())
+    )
+
+    // Ordenar
     produtos.sort((a, b) => {
       const nameA = (a.title ?? "").toLowerCase()
       const nameB = (b.title ?? "").toLowerCase()
       const priceA = priceToNumber(a.price)
       const priceB = priceToNumber(b.price)
+      
+      // Tratamento seguro para Rating (caso a API não envie rating em alguns produtos)
+      const ratingA = (a as any).rating?.rate ?? 0
+      const ratingB = (b as any).rating?.rate ?? 0
 
       switch (sort) {
-        case "name-asc":
-          return nameA.localeCompare(nameB)
-        case "name-desc":
-          return nameB.localeCompare(nameA)
-        case "price-asc":
-          return priceA - priceB
-        case "price-desc":
-          return priceB - priceA
+        case "name-asc": return nameA.localeCompare(nameB)
+        case "name-desc": return nameB.localeCompare(nameA)
+        case "price-asc": return priceA - priceB
+        case "price-desc": return priceB - priceA
+        case "rating-desc": return ratingB - ratingA // Melhor para Pior
+        case "rating-asc": return ratingA - ratingB // Pior para Melhor
+        default: return 0
       }
     })
     return produtos
-  }, [data, sort])
+  }, [data, sort, search])
 
   const total = useMemo(() => cart.reduce((sum, p) => sum + priceToNumber(p.price), 0), [cart])
 
@@ -97,7 +141,6 @@ export default function ProdutosPage() {
     if (cart.length === 0) return
     setBuyStatus("loading")
     setBuyMsg("")
-
     try {
       const res = await buy({
         products: cart.map((p) => p.id),
@@ -105,7 +148,6 @@ export default function ProdutosPage() {
         coupon,
         name,
       })
-
       setCart([])
       setBuyStatus("success")
       setBuyMsg(`${res.message} | Ref: ${res.reference} | Total: ${res.totalCost} €`)
@@ -121,11 +163,7 @@ export default function ProdutosPage() {
     return (
       <div className="mt-4 rounded-2xl bg-red-500/10 p-4">
         <p className="font-bold">Erro a carregar produtos</p>
-        <p className="opacity-80 mt-1">{String((error as any)?.message ?? error)}</p>
-        <button
-          onClick={() => mutate()}
-          className="mt-3 rounded-xl bg-blue-300 px-4 py-2 hover:bg-blue-200"
-        >
+        <button onClick={() => mutate()} className="mt-3 rounded-xl bg-blue-300 px-4 py-2 hover:bg-blue-200">
           Tentar novamente
         </button>
       </div>
@@ -134,30 +172,52 @@ export default function ProdutosPage() {
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4">
         <h2 className="text-2xl font-extrabold drop-shadow-sm">Produtos</h2>
 
-        <label className="flex items-center gap-2">
-          <span className="opacity-80 text-sm">Ordenar:</span>
-          <select
-            value={sort}
-            onChange={(e) => setSort(e.target.value as SortKey)}
-            className="rounded-xl bg-blue-300/60 px-3 py-2 outline-none"
-          >
-            <option value="name-asc">Nome (A → Z)</option>
-            <option value="name-desc">Nome (Z → A)</option>
-            <option value="price-asc">Preço (↑)</option>
-            <option value="price-desc">Preço (↓)</option>
-          </select>
-        </label>
+        {/* Barra de Controlo: Pesquisa e Ordenação */}
+        <div className="flex flex-col sm:flex-row gap-4 bg-blue-300/20 p-4 rounded-xl">
+          <input 
+            type="text" 
+            placeholder="Pesquisar produto..." 
+            className="flex-grow p-2 rounded-xl outline-none text-slate-900 placeholder:text-slate-500"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+
+          <label className="flex items-center gap-2">
+            <span className="opacity-80 text-sm font-bold">Ordenar:</span>
+            <select
+              value={sort}
+              onChange={(e) => setSort(e.target.value as SortKey)}
+              className="rounded-xl bg-white px-3 py-2 outline-none text-slate-900 cursor-pointer"
+            >
+              <option value="name-asc">Nome (A → Z)</option>
+              <option value="name-desc">Nome (Z → A)</option>
+              <option value="price-asc">Preço (↑)</option>
+              <option value="price-desc">Preço (↓)</option>
+              <option value="rating-desc">⭐ Rating (Melhor)</option>
+              <option value="rating-asc">⭐ Rating (Pior)</option>
+            </select>
+          </label>
+        </div>
       </div>
 
-      <ProdutosList
-        produtos={sortedProdutos}
-        cartIds={cartIds}
-        onAddToCart={addToCart}
-        onRemoveFromCart={removeFromCart}
-      />
+      {/* Lista de Produtos (Mapeada diretamente aqui) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {filteredAndSortedProdutos.map((produto) => (
+          <ProdutoCard
+            key={produto.id}
+            produto={produto}
+            onAddToCart={addToCart}
+            onRemoveFromCart={removeFromCart}
+            inCart={cart.some((p) => p.id === produto.id)}
+            // Passamos se é favorito e a função de alterar
+            isFavorite={favorites.includes(produto.id)}
+            onToggleFavorite={toggleFavorite}
+          />
+        ))}
+      </div>
 
       {/* Carrinho */}
       <div className="rounded-2xl bg-blue-300/30 p-4">
@@ -176,12 +236,15 @@ export default function ProdutosPage() {
                 produto={p}
                 inCart={true}
                 onRemoveFromCart={removeFromCart}
+                // Também passamos os favoritos aqui, para consistência
+                isFavorite={favorites.includes(p.id)}
+                onToggleFavorite={toggleFavorite}
               />
             ))}
           </div>
         )}
 
-        {/* Comprar */}
+        {/* Formulário de Compra */}
         <div className="mt-6 grid gap-3 sm:grid-cols-2">
           <label className="flex items-center gap-2">
             <input
