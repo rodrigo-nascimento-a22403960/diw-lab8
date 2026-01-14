@@ -2,7 +2,8 @@
 
 import Link from "next/link"
 import { Produto, resolveImageUrl } from "@/lib/deisishop"
-
+import ContadorPersonalizado from "@/components/ContadorPersonalizado/ContadorPersonalizado"
+import { useEffect, useMemo, useState } from "react"
 type Props = {
   produto: Produto
   onAddToCart?: (p: Produto) => void
@@ -40,6 +41,7 @@ export default function ProdutoCard({
           className="mt-2 h-40 w-full object-contain bg-white/70 rounded-xl"
           loading="lazy"
         />
+        
       ) : (
         <div className="mt-2 h-40 w-full bg-white/60 rounded-xl grid place-items-center opacity-80">
           sem imagem
@@ -63,8 +65,48 @@ export default function ProdutoCard({
           >
             Remover do carrinho
           </button>
+
+          const [likes, setLikes] = useState(0)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+    const raw = localStorage.getItem(storageKey)
+    const n = raw ? Number(raw) : 0
+    setLikes(Number.isFinite(n) ? n : 0)
+  }, [storageKey])
+
+  useEffect(() => {
+    if (!mounted) return
+    localStorage.setItem(storageKey, String(likes))
+  }, [likes, mounted, storageKey])
+
+  return (
+    <button
+      type="button"
+      onClick={() => setLikes((v) => v + 1)}
+      className="bg-white/70 px-3 py-1 rounded-xl font-semibold hover:bg-white transition"
+      suppressHydrationWarning
+    >
+      ❤️ {mounted ? likes : 0}
+    </button>
+  )
+          
+
+          
         )}
+        
+
+
+        
+
+        
+        
       </div>
+      
+      <ContadorPersonalizado title={produto.title} />
+      
     </div>
   )
 }
+

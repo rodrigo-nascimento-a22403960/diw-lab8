@@ -3,6 +3,7 @@
 import Link from "next/link"
 import type { Product } from "@/models/interfaces"
 import { resolveImageUrl } from "@/lib/deisishop"
+import ContadorPersonalizado from "@/components/ContadorPersonalizado/ContadorPersonalizado"
 
 export default function ProdutoDetails({ produto }: { produto: Product }) {
   const img = resolveImageUrl(produto.image)
@@ -32,6 +33,9 @@ export default function ProdutoDetails({ produto }: { produto: Product }) {
       <Link href="/produtos" className="inline-block mt-6 underline">
         Voltar
       </Link>
+
+      <ContadorPersonalizado title={produto.title} />
     </div>
   )
 }
+

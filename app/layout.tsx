@@ -35,6 +35,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <Link className="hover:text-white" href="/input">Input</Link>
             <Link className="hover:text-white" href="/produtos">Produtos</Link>
             <Link className="hover:text-white" href="/categorias">Categorias</Link>
+            <Link className="hover:text-white" href="/paises">Paises</Link>
+            <Link className="hover:text-white" href="/paises">Recentes</Link>
           </nav>
         </header>
 
